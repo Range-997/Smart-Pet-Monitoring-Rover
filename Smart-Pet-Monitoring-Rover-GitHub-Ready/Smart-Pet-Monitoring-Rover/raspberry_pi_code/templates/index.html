@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Pet Monitoring Rover</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            color: #222;
+            text-align: center;
+        }
+        header {
+            background: #1f2937;
+            color: white;
+            padding: 18px 10px;
+        }
+        main {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+        .video-box img {
+            width: 640px;
+            max-width: 100%;
+            border: 3px solid #333;
+            border-radius: 8px;
+            background: black;
+        }
+        .status {
+            margin: 16px auto;
+            padding: 12px;
+            max-width: 640px;
+            border-radius: 8px;
+            background: white;
+            border: 1px solid #ddd;
+            font-weight: bold;
+        }
+        .controls {
+            margin-top: 18px;
+        }
+        button {
+            width: 125px;
+            height: 44px;
+            margin: 6px;
+            border: none;
+            border-radius: 7px;
+            font-size: 15px;
+            cursor: pointer;
+        }
+        .move { background: #2563eb; color: white; }
+        .stop { background: #dc2626; color: white; }
+        .mode { background: #059669; color: white; width: 150px; }
+        .off { background: #6b7280; color: white; width: 150px; }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Smart Pet Monitoring Rover</h1>
+</header>
+<main>
+    <div class="video-box">
+        <img src="/video_feed" alt="Live video stream">
+    </div>
+
+    <div id="status" class="status">Status: loading...</div>
+
+    <div class="controls">
+        <div>
+            <button class="move" onclick="sendCmd('FORWARD')">Forward</button>
+        </div>
+        <div>
+            <button class="move" onclick="sendCmd('LEFT')">Left</button>
+            <button class="stop" onclick="sendCmd('STOP')">Stop</button>
+            <button class="move" onclick="sendCmd('RIGHT')">Right</button>
+        </div>
+        <div>
+            <button class="move" onclick="sendCmd('BACKWARD')">Backward</button>
+        </div>
+        <div style="margin-top:18px;">
+            <button class="mode" onclick="setAuto(true)">Auto Patrol ON</button>
+            <button class="off" onclick="setAuto(false)">Manual Mode</button>
+        </div>
+    </div>
+</main>
+
+<script>
+async function postJson(url, data) {
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    });
+    return await res.json();
+}
+
+async function sendCmd(cmd) {
+    const data = await postJson('/control', {cmd: cmd});
+    updateStatusText(data);
+}
+
+async function setAuto(enable) {
+    const data = await postJson('/mode', {auto: enable});
+    updateStatusText(data);
+}
+
+function updateStatusText(data) {
+    if (!data) return;
+    let text = 'Mode: ' + (data.auto_mode ? 'AUTO' : 'MANUAL');
+    text += ' | Target: ' + (data.target_found ? 'FOUND' : 'not found');
+    text += ' | Last command: ' + data.last_command;
+    if (!data.serial_ready) text += ' | Serial not connected';
+    document.getElementById('status').innerText = text;
+}
+
+async function refreshStatus() {
+    try {
+        const res = await fetch('/status');
+        const data = await res.json();
+        updateStatusText(data);
+    } catch (err) {
+        document.getElementById('status').innerText = 'Status: connection error';
+    }
+}
+
+setInterval(refreshStatus, 1000);
+refreshStatus();
+</script>
+</body>
+</html>
