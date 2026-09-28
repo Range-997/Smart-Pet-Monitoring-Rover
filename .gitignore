@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local configuration and generated model files
+.env
+yolov8n.pt
+
+# OS and editor files
+.DS_Store
+.idea/
+.vscode/
